@@ -289,8 +289,8 @@ func New(options Options) *Interpreter {
 		i.opt.filesystem = options.Filesystem
 	} else {
 		// default to real filesystem
-		cwd, _ := os.Getwd() // FIXME: check error
-		i.opt.filesystem = os.DirFS(cwd)
+		//cwd, _ := os.Getwd() // FIXME: check error
+		i.opt.filesystem = os.DirFS("/")
 	}
 
 	i.opt.context.GOPATH = options.GoPath
@@ -417,7 +417,7 @@ func (interp *Interpreter) Eval(src string) (res reflect.Value, err error) {
 // by the interpreter, and a non nil error in case of failure.
 // The main function of the main package is executed if present.
 func (interp *Interpreter) EvalPath(path string) (res reflect.Value, err error) {
-	if !isFile(path) {
+	if !isFile(interp.opt.filesystem, path) {
 		_, err := interp.importSrc(mainID, path, NoTest)
 		return res, err
 	}
@@ -495,8 +495,8 @@ func (interp *Interpreter) Symbols(importPath string) Exports {
 	return m
 }
 
-func isFile(path string) bool {
-	fi, err := os.Stat(path)
+func isFile(filesystem fs.FS, path string) bool {
+	fi, err := fs.Stat(filesystem, path)
 	return err == nil && fi.Mode().IsRegular()
 }
 
