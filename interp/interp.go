@@ -10,7 +10,7 @@ import (
 	"go/scanner"
 	"go/token"
 	"io"
-	"io/ioutil"
+	"io/fs"
 	"log"
 	"os"
 	"os/signal"
@@ -136,6 +136,7 @@ type opt struct {
 	stdin        io.Reader     // standard input
 	stdout       io.Writer     // standard output
 	stderr       io.Writer     // standard error
+	filesystem   fs.FS
 }
 
 // Interpreter contains global resources and state.
@@ -253,6 +254,8 @@ type Options struct {
 	// They default to os.Stdin, os.Stdout and os.Stderr respectively.
 	Stdin          io.Reader
 	Stdout, Stderr io.Writer
+
+	Filesystem fs.FS
 }
 
 // New returns a new interpreter.
@@ -280,6 +283,13 @@ func New(options Options) *Interpreter {
 
 	if i.opt.stderr = options.Stderr; i.opt.stderr == nil {
 		i.opt.stderr = os.Stderr
+	}
+
+	if options.Filesystem != nil {
+		i.opt.filesystem = options.Filesystem
+	} else {
+		// default to real filesystem
+		i.opt.filesystem = os.DirFS("/")
 	}
 
 	i.opt.context.GOPATH = options.GoPath
@@ -406,12 +416,12 @@ func (interp *Interpreter) Eval(src string) (res reflect.Value, err error) {
 // by the interpreter, and a non nil error in case of failure.
 // The main function of the main package is executed if present.
 func (interp *Interpreter) EvalPath(path string) (res reflect.Value, err error) {
-	if !isFile(path) {
+	if !isFile(interp.opt.filesystem, path) {
 		_, err := interp.importSrc(mainID, path, NoTest)
 		return res, err
 	}
 
-	b, err := ioutil.ReadFile(path)
+	b, err := fs.ReadFile(interp.filesystem, path)
 	if err != nil {
 		return res, err
 	}
@@ -483,8 +493,8 @@ func (interp *Interpreter) Symbols(importPath string) Exports {
 	return m
 }
 
-func isFile(path string) bool {
-	fi, err := os.Stat(path)
+func isFile(filesystem fs.FS, path string) bool {
+	fi, err := fs.Stat(filesystem, path)
 	return err == nil && fi.Mode().IsRegular()
 }
 
