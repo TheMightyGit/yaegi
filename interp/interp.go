@@ -289,7 +289,6 @@ func New(options Options) *Interpreter {
 		i.opt.filesystem = options.Filesystem
 	} else {
 		// default to real filesystem
-		//cwd, _ := os.Getwd() // FIXME: check error
 		i.opt.filesystem = os.DirFS("/")
 	}
 
@@ -422,7 +421,6 @@ func (interp *Interpreter) EvalPath(path string) (res reflect.Value, err error) 
 		return res, err
 	}
 
-	// b, err := ioutil.ReadFile(path)
 	b, err := fs.ReadFile(interp.filesystem, path)
 	if err != nil {
 		return res, err
