@@ -161,7 +161,13 @@ func Test_pkgDir(t *testing.T) {
 		},
 	}
 
-	interp := &Interpreter{}
+	pwd, _ := os.Getwd()
+	filesystem := os.DirFS(pwd)
+	interp := &Interpreter{
+		opt: opt{
+			filesystem: filesystem,
+		},
+	}
 
 	for _, test := range testCases {
 		test := test
@@ -232,6 +238,9 @@ func Test_previousRoot(t *testing.T) {
 		},
 	}
 
+	pwd, _ := os.Getwd()
+	filesystem := os.DirFS(pwd)
+
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
@@ -247,7 +256,7 @@ func Test_previousRoot(t *testing.T) {
 			} else {
 				rootPath = vendor
 			}
-			p, err := previousRoot(rootPath, test.root)
+			p, err := previousRoot(filesystem, rootPath, test.root)
 			if err != nil {
 				t.Error(err)
 			}
