@@ -10,7 +10,7 @@ import (
 	"go/scanner"
 	"go/token"
 	"io"
-	"io/ioutil"
+	"io/fs"
 	"log"
 	"os"
 	"os/signal"
@@ -168,6 +168,8 @@ type Interpreter struct {
 	done     chan struct{}     // for cancellation of channel operations
 
 	hooks *hooks // symbol hooks
+
+	filesystem fs.FS
 }
 
 const (
@@ -257,17 +259,20 @@ type Options struct {
 
 // New returns a new interpreter.
 func New(options Options) *Interpreter {
+	cwd, _ := os.Getwd()
+
 	i := Interpreter{
-		opt:      opt{context: build.Default},
-		frame:    newFrame(nil, 0, 0),
-		fset:     token.NewFileSet(),
-		universe: initUniverse(),
-		scopes:   map[string]*scope{},
-		binPkg:   Exports{"": map[string]reflect.Value{"_error": reflect.ValueOf((*_error)(nil))}},
-		srcPkg:   imports{},
-		pkgNames: map[string]string{},
-		rdir:     map[string]bool{},
-		hooks:    &hooks{},
+		opt:        opt{context: build.Default},
+		frame:      newFrame(nil, 0, 0),
+		fset:       token.NewFileSet(),
+		universe:   initUniverse(),
+		scopes:     map[string]*scope{},
+		binPkg:     Exports{"": map[string]reflect.Value{"_error": reflect.ValueOf((*_error)(nil))}},
+		srcPkg:     imports{},
+		pkgNames:   map[string]string{},
+		rdir:       map[string]bool{},
+		hooks:      &hooks{},
+		filesystem: os.DirFS(cwd),
 	}
 
 	if i.opt.stdin = options.Stdin; i.opt.stdin == nil {
@@ -411,7 +416,8 @@ func (interp *Interpreter) EvalPath(path string) (res reflect.Value, err error) 
 		return res, err
 	}
 
-	b, err := ioutil.ReadFile(path)
+	// b, err := ioutil.ReadFile(path)
+	b, err := fs.ReadFile(interp.filesystem, path)
 	if err != nil {
 		return res, err
 	}
