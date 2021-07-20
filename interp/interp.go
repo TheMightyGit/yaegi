@@ -136,6 +136,7 @@ type opt struct {
 	stdin        io.Reader     // standard input
 	stdout       io.Writer     // standard output
 	stderr       io.Writer     // standard error
+	filesystem   fs.FS
 }
 
 // Interpreter contains global resources and state.
@@ -168,8 +169,6 @@ type Interpreter struct {
 	done     chan struct{}     // for cancellation of channel operations
 
 	hooks *hooks // symbol hooks
-
-	filesystem fs.FS
 }
 
 const (
@@ -255,24 +254,23 @@ type Options struct {
 	// They default to os.Stdin, os.Stdout and os.Stderr respectively.
 	Stdin          io.Reader
 	Stdout, Stderr io.Writer
+
+	Filesystem fs.FS
 }
 
 // New returns a new interpreter.
 func New(options Options) *Interpreter {
-	cwd, _ := os.Getwd()
-
 	i := Interpreter{
-		opt:        opt{context: build.Default},
-		frame:      newFrame(nil, 0, 0),
-		fset:       token.NewFileSet(),
-		universe:   initUniverse(),
-		scopes:     map[string]*scope{},
-		binPkg:     Exports{"": map[string]reflect.Value{"_error": reflect.ValueOf((*_error)(nil))}},
-		srcPkg:     imports{},
-		pkgNames:   map[string]string{},
-		rdir:       map[string]bool{},
-		hooks:      &hooks{},
-		filesystem: os.DirFS(cwd),
+		opt:      opt{context: build.Default},
+		frame:    newFrame(nil, 0, 0),
+		fset:     token.NewFileSet(),
+		universe: initUniverse(),
+		scopes:   map[string]*scope{},
+		binPkg:   Exports{"": map[string]reflect.Value{"_error": reflect.ValueOf((*_error)(nil))}},
+		srcPkg:   imports{},
+		pkgNames: map[string]string{},
+		rdir:     map[string]bool{},
+		hooks:    &hooks{},
 	}
 
 	if i.opt.stdin = options.Stdin; i.opt.stdin == nil {
@@ -285,6 +283,14 @@ func New(options Options) *Interpreter {
 
 	if i.opt.stderr = options.Stderr; i.opt.stderr == nil {
 		i.opt.stderr = os.Stderr
+	}
+
+	if options.Filesystem != nil {
+		i.opt.filesystem = options.Filesystem
+	} else {
+		// default to real filesystem
+		cwd, _ := os.Getwd() // FIXME: check error
+		i.opt.filesystem = os.DirFS(cwd)
 	}
 
 	i.opt.context.GOPATH = options.GoPath

@@ -49,7 +49,7 @@ func (interp *Interpreter) importSrc(rPath, importPath string, skipTest bool) (s
 	interp.rdir[importPath] = true
 
 	// files, err := ioutil.ReadDir(dir)
-	files, err := fs.ReadDir(interp.filesystem, dir)
+	files, err := fs.ReadDir(interp.opt.filesystem, dir)
 	if err != nil {
 		return "", err
 	}
@@ -71,7 +71,7 @@ func (interp *Interpreter) importSrc(rPath, importPath string, skipTest bool) (s
 		name = filepath.Join(dir, name)
 		var buf []byte
 		// if buf, err = ioutil.ReadFile(name); err != nil {
-		if buf, err = fs.ReadFile(interp.filesystem, name); err != nil {
+		if buf, err = fs.ReadFile(interp.opt.filesystem, name); err != nil {
 			return "", err
 		}
 
