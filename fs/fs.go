@@ -15,8 +15,8 @@ type FS = actualFs.FS
 
 // RealFS complies with the fs.FS interface.
 // We use this rather than os.DirFS as DirFS has no concept of
-// what the current working directory is, whereas if we're a simple
-// passthru to os.Open then working dir is automagically taken care of.
+// what the current working directory is, whereas this simple
+// passthru to os.Open knows about working dir automagically.
 type RealFS struct{}
 
 // Open complies with the fs.FS interface
