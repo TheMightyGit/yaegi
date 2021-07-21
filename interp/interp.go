@@ -136,7 +136,7 @@ type opt struct {
 	stdin        io.Reader     // standard input
 	stdout       io.Writer     // standard output
 	stderr       io.Writer     // standard error
-	filesystem   fs.FS
+	filesystem   FS
 }
 
 // Interpreter contains global resources and state.
@@ -242,20 +242,6 @@ func (n *node) Walk(in func(n *node) bool, out func(n *node)) {
 	}
 }
 
-// realFS complies with the fs.FS interface.
-// We use this rather than os.DirFS as DirFS has no concept of
-// what the current working directory is, whereas if we're a simple
-// passthru to os.Open then working dir is automagically taken care of.
-type realFS struct{}
-
-func (dir realFS) Open(name string) (fs.File, error) {
-	f, err := os.Open(name)
-	if err != nil {
-		return nil, err
-	}
-	return f, nil
-}
-
 // Options are the interpreter options.
 type Options struct {
 	// GoPath sets GOPATH for the interpreter.
@@ -269,7 +255,7 @@ type Options struct {
 	Stdin          io.Reader
 	Stdout, Stderr io.Writer
 
-	Filesystem fs.FS
+	Filesystem FS
 }
 
 // New returns a new interpreter.
@@ -504,7 +490,7 @@ func (interp *Interpreter) Symbols(importPath string) Exports {
 	return m
 }
 
-func isFile(filesystem fs.FS, path string) bool {
+func isFile(filesystem FS, path string) bool {
 	fi, err := fs.Stat(filesystem, path)
 	return err == nil && fi.Mode().IsRegular()
 }
