@@ -1,3 +1,5 @@
+//+build go1.16
+
 package fs1
 
 import (
@@ -51,7 +53,7 @@ func PrintSomethingElse() {
 	}
 )
 
-func TestFilesystem(t *testing.T) {
+func TestFilesystemMapFS(t *testing.T) {
 	i := interp.New(interp.Options{
 		GoPath:     "./_pkg",
 		Filesystem: testFilesystem,
