@@ -165,7 +165,7 @@ func Test_pkgDir(t *testing.T) {
 	filesystem := os.DirFS(pwd)
 	interp := &Interpreter{
 		opt: opt{
-			filesystem: filesystem,
+			filesystem: &WorkingDirFS{innerFS: filesystem},
 		},
 	}
 

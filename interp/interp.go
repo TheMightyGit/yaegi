@@ -136,7 +136,7 @@ type opt struct {
 	stdin        io.Reader     // standard input
 	stdout       io.Writer     // standard output
 	stderr       io.Writer     // standard error
-	filesystem   fs.FS
+	filesystem   *WorkingDirFS
 }
 
 // Interpreter contains global resources and state.
@@ -242,6 +242,69 @@ func (n *node) Walk(in func(n *node) bool, out func(n *node)) {
 	}
 }
 
+type WorkingDirFS struct {
+	pwd     string
+	innerFS fs.FS
+}
+
+func (wdFS *WorkingDirFS) Getwd() string {
+	return wdFS.pwd
+}
+
+func (wdFS *WorkingDirFS) Chdir(pwd string) {
+	wdFS.pwd = pwd
+}
+
+func (wdFS *WorkingDirFS) Open(name string) (fs.File, error) {
+	// oldname := name
+	// if not already present we need to make it relative to pwd.
+	// must be unrooted (no leading /) and relative to faux pwd
+
+	if !strings.HasPrefix(name, wdFS.pwd) {
+		name = wdFS.pwd + "/" + name
+	}
+
+	// remove any "/./"
+	// flatten any "/../"
+	// so it passes ValidPath()
+	name = path.Clean(name)
+
+	name = strings.TrimPrefix(name, "/")
+
+	f, err := wdFS.innerFS.Open(name)
+	// log.Println("Open *****************************", oldname, "->", name, err)
+	return f, err
+}
+
+/*
+func (wdFS *WorkingDirFS) ReadDir(name string) ([]fs.DirEntry, error) {
+	if name[0] != '/' {
+		oldname := name
+		name = wdFS.pwd + "/" + name
+		log.Println("ReadDir *****************************", oldname, "->", name)
+	}
+	return (wdFS.FS.(fs.ReadDirFS)).ReadDir(name)
+}
+
+func (wdFS *WorkingDirFS) ReadFile(name string) ([]byte, error) {
+	if name[0] != '/' {
+		oldname := name
+		name = wdFS.pwd + "/" + name
+		log.Println("ReadFile *****************************", oldname, "->", name)
+	}
+	return (wdFS.FS.(fs.ReadFileFS)).ReadFile(name)
+}
+
+func (wdFS *WorkingDirFS) Stat(name string) (fs.FileInfo, error) {
+	if name[0] != '/' {
+		oldname := name
+		name = wdFS.pwd + "/" + name
+		log.Println("ReadFile *****************************", oldname, "->", name)
+	}
+	return (wdFS.FS.(fs.StatFS)).Stat(name)
+}
+*/
+
 // Options are the interpreter options.
 type Options struct {
 	// GoPath sets GOPATH for the interpreter.
@@ -286,10 +349,17 @@ func New(options Options) *Interpreter {
 	}
 
 	if options.Filesystem != nil {
-		i.opt.filesystem = options.Filesystem
+		i.opt.filesystem = &WorkingDirFS{
+			pwd:     "/",
+			innerFS: options.Filesystem,
+		}
 	} else {
 		// default to real filesystem
-		i.opt.filesystem = os.DirFS("/")
+		pwd, _ := os.Getwd()
+		i.opt.filesystem = &WorkingDirFS{
+			pwd:     pwd,
+			innerFS: os.DirFS("/"),
+		}
 	}
 
 	i.opt.context.GOPATH = options.GoPath
