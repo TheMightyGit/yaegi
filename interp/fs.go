@@ -9,6 +9,8 @@ import (
 	"os"
 )
 
+// We use a type alias to make it easier for the pre-go1.16
+// code to fullfil this local type.
 type FS = fs.FS
 
 // realFS complies with the fs.FS interface.
