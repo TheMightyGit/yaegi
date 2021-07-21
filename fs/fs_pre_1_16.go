@@ -23,7 +23,14 @@ type FS interface {
 	// (maybe we should prevent this at all?) to 1.16+ then
 	// they may have some adjustments to make (*os.File vs fs.File)
 	//
-	Open(name string) (*os.File, error)
+	Open(name string) (File, error)
+}
+
+type File interface {
+	Stat() (os.FileInfo, error)
+	Read([]byte) (int, error)
+	Close() error
+	ReadDir(n int) ([]os.DirEntry, error)
 }
 
 // RealFS complies with the FS interface. It simply overlays
@@ -31,7 +38,7 @@ type FS interface {
 type RealFS struct{}
 
 // Open is a thin layer around os.Open to confirm with the mimic of fs.FS.
-func (dir RealFS) Open(name string) (*os.File, error) {
+func (dir RealFS) Open(name string) (File, error) {
 	f, err := os.Open(name)
 	if err != nil {
 		return nil, err
@@ -52,7 +59,7 @@ func ReadDir(fsys FS, name string) ([]os.DirEntry, error) {
 	return list, err
 }
 
-// Stat mimics the 1.16 fs.ReadDir as closely as we can.
+// Stat mimics the 1.16 fs.Stat as closely as we can.
 func Stat(fsys FS, name string) (os.FileInfo, error) {
 	file, err := fsys.Open(name)
 	if err != nil {
@@ -62,7 +69,7 @@ func Stat(fsys FS, name string) (os.FileInfo, error) {
 	return file.Stat()
 }
 
-// ReadFile mimics the 1.16 fs.ReadDir as closely as we can.
+// ReadFile mimics the 1.16 fs.ReadFile as closely as we can.
 func ReadFile(fsys FS, name string) ([]byte, error) {
 	file, err := fsys.Open(name)
 	if err != nil {
