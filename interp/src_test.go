@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/traefik/yaegi/fs"
 )
 
 func Test_effectivePkg(t *testing.T) {
@@ -163,7 +165,7 @@ func Test_pkgDir(t *testing.T) {
 
 	interp := &Interpreter{
 		opt: opt{
-			filesystem: &realFS{},
+			filesystem: &fs.RealFS{},
 		},
 	}
 
@@ -251,7 +253,7 @@ func Test_previousRoot(t *testing.T) {
 			} else {
 				rootPath = vendor
 			}
-			p, err := previousRoot(&realFS{}, rootPath, test.root)
+			p, err := previousRoot(&fs.RealFS{}, rootPath, test.root)
 			if err != nil {
 				t.Error(err)
 			}

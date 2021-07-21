@@ -2,7 +2,7 @@
 
 // fs.FS is only available from go 1.16 onwards
 
-package interp
+package fs
 
 import (
 	"io"
@@ -18,16 +18,21 @@ import (
 // in 1.16
 
 type FS interface {
+	// Note: Open has a different signature to 1.16 - so if
+	// someone migrates from using a custom fs under 1.15
+	// (maybe we should prevent this at all?) to 1.16+ then
+	// they may have some adjustments to make (*os.File vs fs.File)
+	//
 	Open(name string) (*os.File, error)
 }
 
-// realFS complies with the fs.FS interface.
+// RealFS complies with the fs.FS interface.
 // We use this rather than os.DirFS as DirFS has no concept of
 // what the current working directory is, whereas if we're a simple
 // passthru to os.Open then working dir is automagically taken care of.
-type realFS struct{}
+type RealFS struct{}
 
-func (dir realFS) Open(name string) (*os.File, error) {
+func (dir RealFS) Open(name string) (*os.File, error) {
 	f, err := os.Open(name)
 	if err != nil {
 		return nil, err

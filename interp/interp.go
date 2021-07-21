@@ -22,6 +22,8 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+
+	"github.com/traefik/yaegi/fs"
 )
 
 // Interpreter node structure for AST and CFG.
@@ -135,7 +137,7 @@ type opt struct {
 	stdin        io.Reader     // standard input
 	stdout       io.Writer     // standard output
 	stderr       io.Writer     // standard error
-	filesystem   FS
+	filesystem   fs.FS
 }
 
 // Interpreter contains global resources and state.
@@ -254,13 +256,13 @@ type Options struct {
 	Stdin          io.Reader
 	Stdout, Stderr io.Writer
 
-	Filesystem FS
+	Filesystem fs.FS
 }
 
 // New returns a new interpreter.
 func New(options Options) *Interpreter {
 	i := Interpreter{
-		opt:      opt{context: build.Default, filesystem: &realFS{}},
+		opt:      opt{context: build.Default, filesystem: &fs.RealFS{}},
 		frame:    newFrame(nil, 0, 0),
 		fset:     token.NewFileSet(),
 		universe: initUniverse(),
@@ -417,7 +419,7 @@ func (interp *Interpreter) EvalPath(path string) (res reflect.Value, err error) 
 		return res, err
 	}
 
-	b, err := ReadFile(interp.filesystem, path)
+	b, err := fs.ReadFile(interp.filesystem, path)
 	if err != nil {
 		return res, err
 	}
@@ -489,8 +491,8 @@ func (interp *Interpreter) Symbols(importPath string) Exports {
 	return m
 }
 
-func isFile(filesystem FS, path string) bool {
-	fi, err := Stat(filesystem, path)
+func isFile(filesystem fs.FS, path string) bool {
+	fi, err := fs.Stat(filesystem, path)
 	return err == nil && fi.Mode().IsRegular()
 }
 
