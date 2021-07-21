@@ -161,11 +161,9 @@ func Test_pkgDir(t *testing.T) {
 		},
 	}
 
-	pwd, _ := os.Getwd()
-	filesystem := os.DirFS(pwd)
 	interp := &Interpreter{
 		opt: opt{
-			filesystem: &WorkingDirFS{innerFS: filesystem},
+			filesystem: &realFS{},
 		},
 	}
 

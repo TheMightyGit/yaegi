@@ -136,7 +136,7 @@ type opt struct {
 	stdin        io.Reader     // standard input
 	stdout       io.Writer     // standard output
 	stderr       io.Writer     // standard error
-	filesystem   *WorkingDirFS
+	filesystem   fs.FS
 }
 
 // Interpreter contains global resources and state.
@@ -242,68 +242,19 @@ func (n *node) Walk(in func(n *node) bool, out func(n *node)) {
 	}
 }
 
-type WorkingDirFS struct {
-	pwd     string
-	innerFS fs.FS
-}
+// realFS complies with the fs.FS interface.
+// We use this rather than os.DirFS as DirFS has no concept of
+// what the current working directory is, whereas if we're a simple
+// passthru to os.Open then working dir it automagically taken care of.
+type realFS struct{}
 
-func (wdFS *WorkingDirFS) Getwd() string {
-	return wdFS.pwd
-}
-
-func (wdFS *WorkingDirFS) Chdir(pwd string) {
-	wdFS.pwd = pwd
-}
-
-func (wdFS *WorkingDirFS) Open(name string) (fs.File, error) {
-	// oldname := name
-	// if not already present we need to make it relative to pwd.
-	// must be unrooted (no leading /) and relative to faux pwd
-
-	if !strings.HasPrefix(name, wdFS.pwd) {
-		name = wdFS.pwd + "/" + name
+func (dir realFS) Open(name string) (fs.File, error) {
+	f, err := os.Open(name)
+	if err != nil {
+		return nil, err
 	}
-
-	// remove any "/./"
-	// flatten any "/../"
-	// so it passes ValidPath()
-	name = path.Clean(name)
-
-	name = strings.TrimPrefix(name, "/")
-
-	f, err := wdFS.innerFS.Open(name)
-	// log.Println("Open *****************************", oldname, "->", name, err)
-	return f, err
+	return f, nil
 }
-
-/*
-func (wdFS *WorkingDirFS) ReadDir(name string) ([]fs.DirEntry, error) {
-	if name[0] != '/' {
-		oldname := name
-		name = wdFS.pwd + "/" + name
-		log.Println("ReadDir *****************************", oldname, "->", name)
-	}
-	return (wdFS.FS.(fs.ReadDirFS)).ReadDir(name)
-}
-
-func (wdFS *WorkingDirFS) ReadFile(name string) ([]byte, error) {
-	if name[0] != '/' {
-		oldname := name
-		name = wdFS.pwd + "/" + name
-		log.Println("ReadFile *****************************", oldname, "->", name)
-	}
-	return (wdFS.FS.(fs.ReadFileFS)).ReadFile(name)
-}
-
-func (wdFS *WorkingDirFS) Stat(name string) (fs.FileInfo, error) {
-	if name[0] != '/' {
-		oldname := name
-		name = wdFS.pwd + "/" + name
-		log.Println("ReadFile *****************************", oldname, "->", name)
-	}
-	return (wdFS.FS.(fs.StatFS)).Stat(name)
-}
-*/
 
 // Options are the interpreter options.
 type Options struct {
@@ -324,7 +275,7 @@ type Options struct {
 // New returns a new interpreter.
 func New(options Options) *Interpreter {
 	i := Interpreter{
-		opt:      opt{context: build.Default},
+		opt:      opt{context: build.Default, filesystem: &realFS{}},
 		frame:    newFrame(nil, 0, 0),
 		fset:     token.NewFileSet(),
 		universe: initUniverse(),
@@ -349,17 +300,7 @@ func New(options Options) *Interpreter {
 	}
 
 	if options.Filesystem != nil {
-		i.opt.filesystem = &WorkingDirFS{
-			pwd:     "/",
-			innerFS: options.Filesystem,
-		}
-	} else {
-		// default to real filesystem
-		pwd, _ := os.Getwd()
-		i.opt.filesystem = &WorkingDirFS{
-			pwd:     pwd,
-			innerFS: os.DirFS("/"),
-		}
+		i.opt.filesystem = options.Filesystem
 	}
 
 	i.opt.context.GOPATH = options.GoPath
