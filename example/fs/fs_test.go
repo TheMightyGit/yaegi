@@ -11,33 +11,47 @@ import (
 var (
 	testFilesystem = fstest.MapFS{
 		"main.go": &fstest.MapFile{
-			Data: []byte(`
-package main
+			Data: []byte(`package main
 
-import "foo/bar"
+import (
+	"foo/bar"
+	"./localfoo"
+)
 
 func main() {
 	bar.PrintSomething()
+	localfoo.PrintSomethingElse()
 }
 `),
 		},
 		"_pkg/src/foo/bar/bar.go": &fstest.MapFile{
-			Data: []byte(`
-package bar
+			Data: []byte(`package bar
 
 import (
 	"fmt"
 )
 
 func PrintSomething() {
-	fmt.Println("I am printing something!")
+	fmt.Println("I am a virtual filesystem printing something from _pkg/src/foo/bar/bar.go!")
+}
+`),
+		},
+		"localfoo/foo.go": &fstest.MapFile{
+			Data: []byte(`package localfoo
+
+import (
+	"fmt"
+)
+
+func PrintSomethingElse() {
+	fmt.Println("I am virtual filesystem printing else from localfoo/foo.go!")
 }
 `),
 		},
 	}
 )
 
-func TestFunctionCall(t *testing.T) {
+func TestFilesystem(t *testing.T) {
 	i := interp.New(interp.Options{
 		GoPath:     "./_pkg",
 		Filesystem: testFilesystem,
