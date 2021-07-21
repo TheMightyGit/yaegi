@@ -16,7 +16,7 @@ import (
 //
 // We do this by cribbing from the fs.FS implementation
 // in 1.16
-
+//
 type FS interface {
 	// Note: Open has a different signature to 1.16 - so if
 	// someone migrates from using a custom fs under 1.15
