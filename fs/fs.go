@@ -1,7 +1,9 @@
 // +build go1.16
 
-// fs.FS is only available from go 1.16 onwards, we have this small wrapper so
+// fs.FS is only available from go 1.16 onwards, we have this thin wrapper so
 // that it's easier for the 1.15 and below fallback code to polyfill it.
+// Once 1.15 and below are no longer supported we can drop this thin wrapper
+// and use fs.FS directly.
 
 package fs
 
