@@ -10,12 +10,12 @@ import (
 	"sort"
 )
 
-// As fs.FS isn't available pre-1.16 we have to supply
+// FS tries to mimic the unavailable fs.FS. We have to supply
 // interfaces and type that complies with the fs.FS interface
 // so as not to break the main code.
 //
 // We do this by cribbing from the fs.FS implementation
-// in 1.16
+// in 1.16.
 //
 type FS interface {
 	// Note: Open has a different signature to 1.16 - so if
@@ -26,12 +26,11 @@ type FS interface {
 	Open(name string) (*os.File, error)
 }
 
-// RealFS complies with the fs.FS interface.
-// We use this rather than os.DirFS as DirFS has no concept of
-// what the current working directory is, whereas if we're a simple
-// passthru to os.Open then working dir is automagically taken care of.
+// RealFS complies with the FS interface. It simply overlays
+// the existing default filesystem.
 type RealFS struct{}
 
+// Open is a thin layer around os.Open to confirm with the mimic of fs.FS.
 func (dir RealFS) Open(name string) (*os.File, error) {
 	f, err := os.Open(name)
 	if err != nil {
@@ -40,6 +39,7 @@ func (dir RealFS) Open(name string) (*os.File, error) {
 	return f, nil
 }
 
+// ReadDir mimics the 1.16 fs.ReadDir as closely as we can.
 func ReadDir(fsys FS, name string) ([]os.DirEntry, error) {
 	file, err := fsys.Open(name)
 	if err != nil {
@@ -52,6 +52,7 @@ func ReadDir(fsys FS, name string) ([]os.DirEntry, error) {
 	return list, err
 }
 
+// Stat mimics the 1.16 fs.ReadDir as closely as we can.
 func Stat(fsys FS, name string) (os.FileInfo, error) {
 	file, err := fsys.Open(name)
 	if err != nil {
@@ -61,6 +62,7 @@ func Stat(fsys FS, name string) (os.FileInfo, error) {
 	return file.Stat()
 }
 
+// ReadFile mimics the 1.16 fs.ReadDir as closely as we can.
 func ReadFile(fsys FS, name string) ([]byte, error) {
 	file, err := fsys.Open(name)
 	if err != nil {

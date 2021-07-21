@@ -19,7 +19,7 @@ type FS = actualFs.FS
 // passthru to os.Open knows about working dir automagically.
 type RealFS struct{}
 
-// Open complies with the fs.FS interface
+// Open complies with the fs.FS interface.
 func (dir RealFS) Open(name string) (actualFs.File, error) {
 	f, err := os.Open(name)
 	if err != nil {
