@@ -48,7 +48,7 @@ func (dir RealFS) Open(name string) (File, error) {
 	return f, nil
 }
 
-// ReadDir mimics the 1.16 fs.ReadDir as closely as we can.
+// ReadDir polyfill that mimics the 1.16 fs.ReadDir as closely as we can.
 func ReadDir(fsys FS, name string) ([]os.DirEntry, error) {
 	file, err := fsys.Open(name)
 	if err != nil {
@@ -61,7 +61,7 @@ func ReadDir(fsys FS, name string) ([]os.DirEntry, error) {
 	return list, err
 }
 
-// Stat mimics the 1.16 fs.Stat as closely as we can.
+// Stat polyfill that mimics the 1.16 fs.Stat as closely as we can.
 func Stat(fsys FS, name string) (os.FileInfo, error) {
 	file, err := fsys.Open(name)
 	if err != nil {
@@ -71,7 +71,7 @@ func Stat(fsys FS, name string) (os.FileInfo, error) {
 	return file.Stat()
 }
 
-// ReadFile mimics the 1.16 fs.ReadFile as closely as we can.
+// ReadFile polyfill that mimics the 1.16 fs.ReadFile as closely as we can.
 func ReadFile(fsys FS, name string) ([]byte, error) {
 	file, err := fsys.Open(name)
 	if err != nil {
