@@ -1,6 +1,8 @@
 // +build !go1.16
 
-// fs.FS is only available from go 1.16 onwards
+// fs.FS is only available from go 1.16 onwards, so for 1.15
+// and below we need to implement something that mimics fs.FS
+// as closely as we can.
 
 package fs
 
