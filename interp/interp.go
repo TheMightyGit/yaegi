@@ -10,7 +10,6 @@ import (
 	"go/scanner"
 	"go/token"
 	"io"
-	"io/fs"
 	"log"
 	"os"
 	"os/signal"
@@ -418,7 +417,7 @@ func (interp *Interpreter) EvalPath(path string) (res reflect.Value, err error) 
 		return res, err
 	}
 
-	b, err := fs.ReadFile(interp.filesystem, path)
+	b, err := ReadFile(interp.filesystem, path)
 	if err != nil {
 		return res, err
 	}
@@ -491,7 +490,7 @@ func (interp *Interpreter) Symbols(importPath string) Exports {
 }
 
 func isFile(filesystem FS, path string) bool {
-	fi, err := fs.Stat(filesystem, path)
+	fi, err := Stat(filesystem, path)
 	return err == nil && fi.Mode().IsRegular()
 }
 

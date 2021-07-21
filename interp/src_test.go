@@ -236,9 +236,6 @@ func Test_previousRoot(t *testing.T) {
 		},
 	}
 
-	pwd, _ := os.Getwd()
-	filesystem := os.DirFS(pwd)
-
 	for _, test := range testCases {
 		test := test
 		t.Run(test.desc, func(t *testing.T) {
@@ -254,7 +251,7 @@ func Test_previousRoot(t *testing.T) {
 			} else {
 				rootPath = vendor
 			}
-			p, err := previousRoot(filesystem, rootPath, test.root)
+			p, err := previousRoot(&realFS{}, rootPath, test.root)
 			if err != nil {
 				t.Error(err)
 			}

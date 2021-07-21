@@ -26,3 +26,9 @@ func (dir realFS) Open(name string) (fs.File, error) {
 	}
 	return f, nil
 }
+
+var (
+	ReadDir  = fs.ReadDir
+	Stat     = fs.Stat
+	ReadFile = fs.ReadFile
+)

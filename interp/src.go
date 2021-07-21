@@ -2,7 +2,6 @@ package interp
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -48,7 +47,7 @@ func (interp *Interpreter) importSrc(rPath, importPath string, skipTest bool) (s
 	}
 	interp.rdir[importPath] = true
 
-	files, err := fs.ReadDir(interp.opt.filesystem, dir)
+	files, err := ReadDir(interp.opt.filesystem, dir)
 	if err != nil {
 		return "", err
 	}
@@ -69,7 +68,7 @@ func (interp *Interpreter) importSrc(rPath, importPath string, skipTest bool) (s
 
 		name = filepath.Join(dir, name)
 		var buf []byte
-		if buf, err = fs.ReadFile(interp.opt.filesystem, name); err != nil {
+		if buf, err = ReadFile(interp.opt.filesystem, name); err != nil {
 			return "", err
 		}
 
@@ -185,13 +184,13 @@ func (interp *Interpreter) pkgDir(goPath string, root, importPath string) (strin
 	rPath := filepath.Join(root, "vendor")
 	dir := filepath.Join(goPath, "src", rPath, importPath)
 
-	if _, err := fs.Stat(interp.opt.filesystem, dir); err == nil {
+	if _, err := Stat(interp.opt.filesystem, dir); err == nil {
 		return dir, rPath, nil // found!
 	}
 
 	dir = filepath.Join(goPath, "src", effectivePkg(root, importPath))
 
-	if _, err := fs.Stat(interp.opt.filesystem, dir); err == nil {
+	if _, err := Stat(interp.opt.filesystem, dir); err == nil {
 		return dir, root, nil // found!
 	}
 
@@ -214,7 +213,7 @@ func (interp *Interpreter) pkgDir(goPath string, root, importPath string) (strin
 const vendor = "vendor"
 
 // Find the previous source root (vendor > vendor > ... > GOPATH).
-func previousRoot(filesystem fs.FS, rootPath, root string) (string, error) {
+func previousRoot(filesystem FS, rootPath, root string) (string, error) {
 	rootPath = filepath.Clean(rootPath)
 	parent, final := filepath.Split(rootPath)
 	parent = filepath.Clean(parent)
@@ -227,7 +226,7 @@ func previousRoot(filesystem fs.FS, rootPath, root string) (string, error) {
 		// look for the closest vendor in one of our direct ancestors, as it takes priority.
 		var vendored string
 		for {
-			fi, err := fs.Stat(filesystem, filepath.Join(parent, vendor))
+			fi, err := Stat(filesystem, filepath.Join(parent, vendor))
 			if err == nil && fi.IsDir() {
 				vendored = strings.TrimPrefix(strings.TrimPrefix(parent, prefix), string(filepath.Separator))
 				break
