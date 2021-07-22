@@ -67,8 +67,8 @@ func (ff *fakeFile) Read(buffer []byte) (int, error) {
 func (ff *fakeFile) Close() error {
 	return nil
 }
-func (ff *fakeFile) ReadDir(n int) ([]os.DirEntry, error) {
-	dirEntries := []os.DirEntry{}
+func (ff *fakeFile) Readdir(n int) ([]os.FileInfo, error) {
+	dirEntries := []os.FileInfo{}
 	if ff.fileInfo.kids != nil {
 		for _, kid := range *ff.fileInfo.kids {
 			dirEntries = append(dirEntries, kid.fileInfo)
@@ -115,16 +115,6 @@ func (ffi *fakeFileInfo) Size() int64 {
 // Sys is required to look like an os.File.
 func (ffi *fakeFileInfo) Sys() interface{} {
 	return "n/a"
-}
-
-// Type is required to look like a os.DirEntry.
-func (ffi *fakeFileInfo) Type() os.FileMode {
-	return ffi.Mode()
-}
-
-// Info is required to look like a os.DirEntry.
-func (ffi *fakeFileInfo) Info() (os.FileInfo, error) {
-	return ffi, nil
 }
 
 var (

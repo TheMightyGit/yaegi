@@ -32,7 +32,7 @@ type File interface {
 	Stat() (os.FileInfo, error)
 	Read([]byte) (int, error)
 	Close() error
-	ReadDir(n int) ([]os.DirEntry, error)
+	Readdir(n int) ([]os.FileInfo, error)
 }
 
 // RealFS complies with the FS interface. It simply overlays
@@ -49,14 +49,14 @@ func (dir RealFS) Open(name string) (File, error) {
 }
 
 // ReadDir polyfill that mimics the 1.16 fs.ReadDir as closely as we can.
-func ReadDir(fsys FS, name string) ([]os.DirEntry, error) {
+func ReadDir(fsys FS, name string) ([]os.FileInfo, error) {
 	file, err := fsys.Open(name)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	list, err := file.ReadDir(-1)
+	list, err := file.Readdir(-1)
 	sort.Slice(list, func(i, j int) bool { return list[i].Name() < list[j].Name() })
 	return list, err
 }
