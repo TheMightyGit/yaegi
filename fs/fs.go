@@ -1,4 +1,4 @@
-// +build !go1.16
+// +build go1.16
 
 // fs.FS is only available from go 1.16 onwards, we have this thin wrapper so
 // that it's easier for the 1.15 and below fallback code to polyfill it.
